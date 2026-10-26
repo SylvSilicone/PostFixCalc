@@ -1,53 +1,75 @@
 import java.util.Scanner;
 import java.util.Stack;
+
 /** STUDENT FILE: Complete evaluate. Leave all other project files unchanged. */
 public class PostfixEvaluator {
-    /**
-     * Evaluates a space-separated postfix expression using integer arithmetic.
-     * Supported operators: +, -, *, / (integer division).
-     *
-     * @throws PostFixException for blank, malformed, or invalid expressions
-     * @throws ArithmeticException for division by zero
-     */
     public static int evaluate(String expression) {
+        if (expression == null || expression.isBlank()) {
+            throw new PostFixException("Expression cannot be blank");
+        }
+
         Stack<Integer> stack = new Stack<>();
-        Scanner tokens = new Scanner(expression);
-        stack.push(tokens.nextInt());
-        for(int i = 0; i < stack.size(); i++)
-        {
-            int int1 = stack.pop();
-            int int2 = stack.pop();
-            String s = tokens.next();
-            if(s.equals("+"))
-            {
-                return int1 + int2;
-            }
-            else if(s.equals("-"))
-            {
-                return int1 - int2;
-            }
-            else if(s.equals("*"))
-            {
-                return int1 * int2;
-            }
-            else if(s.equals("*"))
-            {
-                return int1/int2;
+
+        try (Scanner tokens = new Scanner(expression)) {
+            while (tokens.hasNext()) {
+                String token = tokens.next();
+
+                // If the token is an operator, evaluate it.
+                if (token.equals("+") || token.equals("-")
+                        || token.equals("*") || token.equals("/")) {
+
+                    // An operator requires two operands.
+                    if (stack.size() < 2) {
+                        throw new PostFixException(
+                            "Not enough operands for operator: " + token
+                        );
+                    }
+
+                    // The first popped value is the RIGHT operand.
+                    int right = stack.pop();
+                    int left = stack.pop();
+
+                    int result;
+
+                    switch (token) {
+                        case "+":
+                            result = left + right;
+                            break;
+                        case "-":
+                            result = left - right;
+                            break;
+                        case "*":
+                            result = left * right;
+                            break;
+                        case "/":
+                            result = left / right;
+                            break;
+                        default:
+                            throw new PostFixException("Invalid operator");
+                    }
+
+                    stack.push(result);
+
+                } else {
+                    // Otherwise, the token must be an integer.
+                    try {
+                        stack.push(Integer.parseInt(token));
+                    } catch (NumberFormatException e) {
+                        throw new PostFixException(
+                            "Invalid token: " + token
+                        );
+                    }
+                }
             }
         }
-        tokens.close();
 
-        // TODO 1: Process tokens one at a time.
-        // TODO 2: If a token is an integer, push it onto the stack.
-        // TODO 3: If it is +, -, *, or /, pop two operands.
-        //         IMPORTANT: the first popped number is the RIGHT operand.
-        // TODO 4: Calculate and push the result.
-        // TODO 5: Reject unknown tokens and expressions with too few operands.
-        // TODO 6: After processing, require EXACTLY one result on the stack.
-        //         Catch stack underflow/overflow or check before operations.
-        // Close the Scanner when you are finished.
+        // A valid expression must leave exactly one result.
+        if (stack.size() != 1) {
+            throw new PostFixException(
+                "Malformed expression: expected exactly one result"
+            );
+        }
 
-        tokens.close();
-        throw new UnsupportedOperationException("TODO: implement postfix evaluation");
+        return stack.pop();
     }
 }
